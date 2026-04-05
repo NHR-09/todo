@@ -4,6 +4,14 @@ A premium Flutter productivity app with gamification, YouTube lectures, and beau
 
 ## ✨ Latest Updates
 
+### Notification System 🔔
+- 📢 **Admin Dashboard** - Web-based admin panel to send notifications
+- 🔔 **In-App Notifications** - Beautiful notification center in the app
+- 🎯 **Targeted Updates** - Send announcements, features, and maintenance notices
+- 💾 **Offline Support** - Notifications cached locally
+- 🔄 **Auto-Sync** - Seamless sync with Firebase
+- 🎨 **Color-Coded Types** - Update, Announcement, Feature, Maintenance
+
 ### Premium UI Enhancements
 - 🎨 **Vibrant Colors** - Upgraded from pastel to rich gradients
 - 🎭 **Micro-Interactions** - Smooth animations on every interaction
@@ -25,6 +33,7 @@ A premium Flutter productivity app with gamification, YouTube lectures, and beau
 - 🏆 Hero mode for focus sessions
 
 ### New Premium Features
+- 🔔 **Notification System** - Stay updated with app news and features
 - 🎬 **In-App Lecture Player** - Watch and learn seamlessly
 - ✍️ **Quick Notes** - Add timestamped notes during playback
 - 📱 **Enhanced Widget** - Live stats with remaining items counter
@@ -84,13 +93,21 @@ The Android widget now shows:
 
 ## 🛠️ Tech Stack
 
+### Flutter App
 - **Flutter** - Cross-platform framework
 - **Provider** - State management
 - **SQLite** - Local database
+- **Firebase** - Cloud sync and authentication
 - **YouTube Player Flutter** - In-app video playback
 - **Google Fonts** - Premium typography
 - **Flutter Animate** - Rich animations
 - **Flutter SVG** - Vector graphics support
+
+### Admin API
+- **Node.js** - Server runtime
+- **Express** - Web framework
+- **Firebase Admin SDK** - Cloud database access
+- **REST API** - Simple, scalable architecture
 
 ## 📦 Installation
 
@@ -104,6 +121,8 @@ flutter run
 
 ## 📚 Documentation
 
+- [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) - Complete notification system guide
+- [admin_api/README.md](admin_api/README.md) - Admin API quick start
 - [ENHANCEMENTS.md](ENHANCEMENTS.md) - Detailed list of all improvements
 - [QUICKSTART.md](QUICKSTART.md) - Quick start guide
 - [WIDGET_GUIDE.md](WIDGET_GUIDE.md) - Widget setup and features

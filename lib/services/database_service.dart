@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/task_model.dart';
 import '../models/lecture_model.dart';
 import '../models/user_stats.dart';
+import '../models/notification_model.dart';
 
 class DatabaseService {
   static Database? _database;
@@ -16,7 +17,7 @@ class DatabaseService {
     final path = join(await getDatabasesPath(), 'marvel_todo.db');
     return openDatabase(
       path,
-      version: 6,
+      version: 10,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE tasks (
@@ -83,6 +84,35 @@ class DatabaseService {
           )
         ''');
 
+        await db.execute('''
+          CREATE TABLE notifications (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT NOT NULL,
+            createdAt TEXT NOT NULL,
+            isRead INTEGER DEFAULT 0,
+            actionUrl TEXT,
+            imageUrl TEXT,
+            metadata TEXT,
+            broadcast INTEGER DEFAULT 1,
+            targetUserIds TEXT,
+            pollOptions TEXT,
+            userVote TEXT,
+            userFeedback TEXT
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE lecture_subtasks (
+            id TEXT PRIMARY KEY,
+            lectureId TEXT NOT NULL,
+            title TEXT NOT NULL,
+            completed INTEGER DEFAULT 0,
+            FOREIGN KEY (lectureId) REFERENCES lectures(id) ON DELETE CASCADE
+          )
+        ''');
+
         // Insert default user stats
         await db.insert('user_stats', UserStats().toMap()..['id'] = 1);
       },
@@ -120,6 +150,55 @@ class DatabaseService {
           } catch (_) {
             // Column might already exist
           }
+        }
+        if (oldVersion < 7) {
+          // Add notifications table
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS notifications (
+              id TEXT PRIMARY KEY,
+              title TEXT NOT NULL,
+              message TEXT NOT NULL,
+              type TEXT NOT NULL,
+              createdAt TEXT NOT NULL,
+              isRead INTEGER DEFAULT 0,
+              actionUrl TEXT,
+              imageUrl TEXT,
+              metadata TEXT
+            )
+          ''');
+        }
+        if (oldVersion < 8) {
+          // Ensure lecture_subtasks table exists
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS lecture_subtasks (
+              id TEXT PRIMARY KEY,
+              lectureId TEXT NOT NULL,
+              title TEXT NOT NULL,
+              completed INTEGER DEFAULT 0,
+              FOREIGN KEY (lectureId) REFERENCES lectures(id) ON DELETE CASCADE
+            )
+          ''');
+        }
+        if (oldVersion < 9) {
+          // Add broadcast and targetUserIds columns to notifications
+          try {
+            await db.execute('ALTER TABLE notifications ADD COLUMN broadcast INTEGER DEFAULT 1');
+          } catch (_) {}
+          try {
+            await db.execute('ALTER TABLE notifications ADD COLUMN targetUserIds TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 10) {
+          // Add poll and feedback columns
+          try {
+            await db.execute('ALTER TABLE notifications ADD COLUMN pollOptions TEXT');
+          } catch (_) {}
+          try {
+            await db.execute('ALTER TABLE notifications ADD COLUMN userVote TEXT');
+          } catch (_) {}
+          try {
+            await db.execute('ALTER TABLE notifications ADD COLUMN userFeedback TEXT');
+          } catch (_) {}
         }
       },
     );
@@ -346,4 +425,92 @@ class DatabaseService {
   }
 
   static int _max(int a, int b) => a > b ? a : b;
+
+  // -- Notifications --
+  static Future<List<AppNotification>> getNotifications() async {
+    final db = await database;
+    final maps = await db.query('notifications', orderBy: 'createdAt DESC');
+    return maps.map((m) => AppNotification.fromMap(m)).toList();
+  }
+
+  static Future<void> insertNotification(dynamic notification) async {
+    final db = await database;
+    await db.insert(
+      'notifications',
+      notification.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<void> markNotificationAsRead(String id) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'isRead': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  static Future<void> markAllNotificationsAsRead() async {
+    final db = await database;
+    await db.update('notifications', {'isRead': 1});
+  }
+
+  static Future<void> deleteNotification(String id) async {
+    final db = await database;
+    await db.delete('notifications', where: 'id = ?', whereArgs: [id]);
+  }
+
+  static Future<int> getUnreadNotificationCount() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM notifications WHERE isRead = 0',
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  static Future<void> updateNotificationVote(String id, String optionId) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'userVote': optionId},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  static Future<void> updateNotificationFeedback(String id, String feedback) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'userFeedback': feedback},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  static Future<String?> getNotificationVote(String id) async {
+    final db = await database;
+    final result = await db.query(
+      'notifications',
+      columns: ['userVote'],
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isEmpty) return null;
+    return result.first['userVote'] as String?;
+  }
+
+  static Future<String?> getNotificationFeedback(String id) async {
+    final db = await database;
+    final result = await db.query(
+      'notifications',
+      columns: ['userFeedback'],
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isEmpty) return null;
+    return result.first['userFeedback'] as String?;
+  }
 }

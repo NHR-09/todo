@@ -7,8 +7,10 @@ import '../theme/app_theme.dart';
 import '../providers/task_provider.dart';
 import '../providers/lecture_provider.dart';
 import '../providers/stats_provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/smart_engine.dart';
 import '../main.dart';
+import 'notifications_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -77,21 +79,80 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildHero(BuildContext context, dynamic stats) {
+    final notificationProvider = context.watch<NotificationProvider>();
+    final unreadCount = notificationProvider.unreadCount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Rank label
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            border: Border.all(color: NHRColors.fog),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            stats.heroTitle.toString().toUpperCase(),
-            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600,
-              letterSpacing: 2, color: NHRColors.dusty),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Rank label
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: NHRColors.fog),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                stats.heroTitle.toString().toUpperCase(),
+                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600,
+                  letterSpacing: 2, color: NHRColors.dusty),
+              ),
+            ),
+            // Notification bell
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                );
+              },
+              child: Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: NHRColors.milkDeep,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: NHRColors.fog),
+                    ),
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: NHRColors.charcoal,
+                    ),
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: NHRColors.terracotta,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : '$unreadCount',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
 

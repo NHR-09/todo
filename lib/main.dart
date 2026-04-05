@@ -10,6 +10,7 @@ import 'providers/lecture_provider.dart';
 import 'providers/stats_provider.dart';
 import 'providers/leetcode_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/notification_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'screens/lectures_screen.dart';
@@ -43,6 +44,7 @@ class NHRApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StatsProvider()),
         ChangeNotifierProvider(create: (_) => LeetCodeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: 'NHR',
@@ -142,6 +144,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     final lecProv = context.read<LectureProvider>();
     final statsProv = context.read<StatsProvider>();
     final lcProv = context.read<LeetCodeProvider>();
+    final notifProv = context.read<NotificationProvider>();
 
     // Load local data first (instant, offline)
     await Future.wait([
@@ -149,6 +152,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       lecProv.loadLectures(),
       statsProv.loadStats(),
       lcProv.loadSavedUsername(),
+      notifProv.loadNotifications(),
     ]);
     setState(() => _loaded = true);
 
@@ -159,6 +163,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       lecProv.loadLectures();
       statsProv.refreshStats();
     });
+    
+    // Also fetch new notifications in background
+    notifProv.fetchNewNotifications();
   }
 
   @override
